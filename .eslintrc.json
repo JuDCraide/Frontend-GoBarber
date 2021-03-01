@@ -32,7 +32,7 @@
     "prettier"
   ],
   "rules": {
-    "import/no-cycle":"off",
+    "import/no-cycle": "off",
     "prettier/prettier": "error",
     "no-use-before-define": "off",
     "react-hooks/rules-of-hooks": "error",
@@ -40,6 +40,8 @@
     "react/prop-types": "off",
     "no-unused-expressions": "off",
     "react/jsx-props-no-spreading": "off",
+    "@typescript-eslint/camelcase": "off",
+    "camelcase": ["error", {"properties": "never"}],
     "react/jsx-filename-extension": [
       1,
       {
