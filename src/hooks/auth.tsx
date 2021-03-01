@@ -1,18 +1,23 @@
+/* eslint-disable camelcase */
 import React, { createContext, useCallback, useContext, useState } from 'react';
 import api from '../services/api';
 
+interface User {
+  id: string;
+  name: string;
+  avatar_url: string;
+}
 interface AuthState {
   token: string;
-  user: Record<string, unknown>;
+  user: User;
 }
-
 interface SignInCredentials {
   email: string;
   password: string;
 }
 
 interface AuthContextData {
-  user: Record<string, unknown>;
+  user: User;
   signIn(credential: SignInCredentials): Promise<void>;
   signOut(): void;
 }
