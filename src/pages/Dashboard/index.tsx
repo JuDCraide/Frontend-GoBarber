@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { isToday, format, parseISO } from 'date-fns';
+import { isToday, format, parseISO, isAfter, isBefore } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 
 import DayPicker, { DayModifiers } from 'react-day-picker';
@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const handleDateChange = useCallback((day: Date, modifiers: DayModifiers) => {
-    if (modifiers.available) {
+    if (modifiers.available && !modifiers.disabled) {
       setSelectedDate(day);
     }
   }, []);
@@ -130,6 +130,20 @@ const Dashboard: React.FC = () => {
       });
   }, [appointments]);
 
+  const nextAppointment = useMemo(() => {
+    let next = { id: '', date: new Date() };
+    appointments.forEach(appointment => {
+      if (
+        isAfter(parseISO(appointment.date), new Date()) &&
+        (next.id === '' || isBefore(parseISO(appointment.date), next.date))
+      ) {
+        next = { id: appointment.id, date: parseISO(appointment.date) };
+      }
+    });
+
+    return appointments.find(a => a.id === next.id);
+  }, [appointments]);
+
   return (
     <Container>
       <Header>
@@ -155,22 +169,27 @@ const Dashboard: React.FC = () => {
             <span>{selectedDayAsText}</span>
             <span>{selectedWeekDayAsText}</span>
           </p>
-          <NextAppointment>
-            <strong>Atendimento a seguir</strong>
-            <div>
-              <img
-                src="http://localhost:3333/files/588dd704e10e02c51a28-20190309_180219.jpg"
-                alt="client.name"
-              />
-              <strong>client.name</strong>
-              <span>
-                <FiClock />
-                13:00
-              </span>
-            </div>
-          </NextAppointment>
+          {isToday(selectedDate) && nextAppointment && (
+            <NextAppointment>
+              <strong>Agendamento a seguir</strong>
+              <div>
+                <img
+                  src={nextAppointment.user.avatar_url}
+                  alt={nextAppointment.user.name}
+                />
+                <strong>{nextAppointment.user.name}</strong>
+                <span>
+                  <FiClock />
+                  {nextAppointment.hourFormatted}
+                </span>
+              </div>
+            </NextAppointment>
+          )}
           <Section>
             <strong>Manhã</strong>
+            {morningAppointments.length === 0 && (
+              <p>Nenhum agendamento neste período</p>
+            )}
             {morningAppointments.map(appointment => (
               <Appointment key={appointment.id}>
                 <span>
@@ -189,6 +208,9 @@ const Dashboard: React.FC = () => {
           </Section>
           <Section>
             <strong>Tarde</strong>
+            {afternoonAppointments.length === 0 && (
+              <p>Nenhum agendamento neste período</p>
+            )}
             {afternoonAppointments.map(appointment => (
               <Appointment key={appointment.id}>
                 <span>
@@ -209,9 +231,15 @@ const Dashboard: React.FC = () => {
         <Calendar>
           <DayPicker
             weekdaysShort={['D', 'S', 'T', 'Q', 'Q', 'S', 'S']}
-            disabledDays={[{ daysOfWeek: [0, 6] }, ...disableDays]}
+            disabledDays={[{ daysOfWeek: [0, 6] }, { before: new Date() }]}
             modifiers={{
               available: { daysOfWeek: [1, 2, 3, 4, 5] },
+              full: disableDays,
+            }}
+            modifiersStyles={{
+              full: {
+                color: '#999591',
+              },
             }}
             onDayClick={handleDateChange}
             onMonthChange={handleMonthChange}
