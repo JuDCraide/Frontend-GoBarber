@@ -1,6 +1,8 @@
 import styled from 'styled-components';
 import { shade } from 'polished';
 
+import { Link } from 'react-router-dom';
+
 export const Container = styled.div``;
 
 export const Header = styled.div`
@@ -31,10 +33,16 @@ export const HeaderContent = styled.div`
   }
 `;
 
-export const Profile = styled.div`
+export const Profile = styled(Link)`
   display: flex;
   align-items: center;
   margin-left: 80px;
+  text-decoration: none;
+  color: #f4ede8;
+
+  &:hover {
+    opacity: 0.8;
+  }
 
   img {
     width: 56px;
