@@ -61,7 +61,7 @@ export const AvatarInput = styled.div`
     object-fit: cover;
   }
 
-  button {
+  label {
     position: absolute;
     width: 48px;
     height: 48px;
@@ -82,6 +82,11 @@ export const AvatarInput = styled.div`
       height: 20px;
       color: #312e38;
     }
+
+    input {
+      display: none;
+    }
+
     &:hover {
       background: ${shade(0.2, '#ff9000')};
     }

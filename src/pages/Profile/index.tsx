@@ -1,12 +1,5 @@
-import React, { useCallback, useRef } from 'react';
-import {
-  FiMail,
-  FiLock,
-  FiUser,
-  FiCamera,
-  FiArrowRight,
-  FiArrowLeft,
-} from 'react-icons/fi';
+import React, { ChangeEvent, useCallback, useRef } from 'react';
+import { FiMail, FiLock, FiUser, FiCamera, FiArrowLeft } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
 import { Form } from '@unform/web';
 import * as Yup from 'yup';
@@ -32,7 +25,7 @@ const Profile: React.FC = () => {
   const { addToast } = useToast();
   const history = useHistory();
 
-  const { user } = useAuth();
+  const { user, updatedUser } = useAuth();
 
   const handleSubmit = useCallback(
     async (data: ProfileFormData) => {
@@ -56,8 +49,7 @@ const Profile: React.FC = () => {
 
         addToast({
           type: 'success',
-          title: 'Cadastro realizado!',
-          description: 'Você já pode fazer seu logon no GoBarber',
+          title: 'Perfil Atualizado!',
         });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
@@ -68,12 +60,30 @@ const Profile: React.FC = () => {
 
         addToast({
           type: 'error',
-          title: 'Erro no cadastro',
-          description: 'Ocorreu um erro ao fazer cadastro, tente novamente.',
+          title: 'Erro na atualização',
+          description:
+            'Ocorreu um erro ao atualizar o perfil, tente novamente.',
         });
       }
     },
     [addToast, history],
+  );
+
+  const handleAvatarChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        const data = new FormData();
+        data.append('avatar', e.target.files[0]);
+        api.patch('/profile/avatar', data).then(res => {
+          updatedUser(res.data);
+          addToast({
+            type: 'success',
+            title: 'Avatar atualizado!',
+          });
+        });
+      }
+    },
+    [addToast],
   );
 
   return (
@@ -96,9 +106,10 @@ const Profile: React.FC = () => {
         >
           <AvatarInput>
             <img src={user.avatar_url} alt={user.name} />
-            <button type="button">
+            <label htmlFor="avatar">
               <FiCamera />
-            </button>
+              <input type="file" id="avatar" onChange={handleAvatarChange} />
+            </label>
           </AvatarInput>
 
           <h1>Meu Perfil</h1>
