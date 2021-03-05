@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import React, { ChangeEvent, useCallback, useRef } from 'react';
 import { FiMail, FiLock, FiUser, FiCamera, FiArrowLeft } from 'react-icons/fi';
 import { FormHandles } from '@unform/core';
@@ -17,7 +18,9 @@ import { useAuth } from '../../hooks/auth';
 interface ProfileFormData {
   name: string;
   email: string;
+  old_password: string;
   password: string;
+  password_confirmation: string;
 }
 
 const Profile: React.FC = () => {
@@ -36,20 +39,48 @@ const Profile: React.FC = () => {
           email: Yup.string()
             .required('Email obrigatório')
             .email('Digite um email válido'),
-          password: Yup.string().min(6, 'No mínimo 6 dígitos'),
+          old_password: Yup.string().when('password', {
+            is: (val: string) => !!val.length,
+            then: Yup.string().required(
+              'Senha antiga obrigatória para atualizar senha',
+            ),
+            otherwise: Yup.string(),
+          }),
+          password: Yup.string(),
+          password_confirmation: Yup.string()
+            .when('password', {
+              is: (val: string) => !!val.length,
+              then: Yup.string().required('Confirmação obrigatória'),
+              otherwise: Yup.string(),
+            })
+            .oneOf([Yup.ref('password'), null], 'Confirmação incorreta'),
         });
 
         await schema.validate(data, {
           abortEarly: false,
         });
 
-        await api.post('/users', data);
+        const formData = {
+          name: data.name,
+          email: data.email,
+          ...(data.password
+            ? {
+                old_password: data.old_password,
+                password: data.password,
+                password_confirmation: data.password_confirmation,
+              }
+            : {}),
+        };
 
-        history.push('/');
+        const res = await api.put('/profile', formData);
+        updatedUser(res.data);
+
+        history.push('/dashboard');
 
         addToast({
           type: 'success',
           title: 'Perfil Atualizado!',
+          description: 'Seus dados foram atualizados com sucesso',
         });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
