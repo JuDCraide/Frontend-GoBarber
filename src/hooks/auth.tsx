@@ -75,7 +75,7 @@ export const AuthProvider: React.FC = ({ children }) => {
         token: data.token,
         user,
       });
-      localStorage.removeItem('@GoBarber:user');
+      localStorage.setItem('@GoBarber:user', JSON.stringify(user));
     },
     [setData, data.token],
   );
@@ -91,10 +91,6 @@ export const AuthProvider: React.FC = ({ children }) => {
 
 export function useAuth(): AuthContextData {
   const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
 
   return context;
 }

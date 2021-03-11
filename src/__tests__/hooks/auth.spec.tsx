@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-hooks';
 import MockAdapter from 'axios-mock-adapter';
 
 import { AuthProvider, useAuth } from '../../hooks/auth';
@@ -38,5 +38,84 @@ describe('AuthHook', () => {
       '@GoBarber:user',
       JSON.stringify(apiRes.user),
     );
+  });
+
+  it('Should restore saved data from storage whan auth inits', async () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(key => {
+      switch (key) {
+        case '@GoBarber:token':
+          return 'token-123';
+        case '@GoBarber:user':
+          return JSON.stringify({
+            id: 'user-123',
+            name: 'Julia DC',
+            email: 'juliadc@hotmail.com',
+          });
+        default:
+          return null;
+      }
+    });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    expect(result.current.user.email).toEqual('juliadc@hotmail.com');
+  });
+
+  it('Should be able to sing out', async () => {
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(key => {
+      switch (key) {
+        case '@GoBarber:token':
+          return 'token-123';
+        case '@GoBarber:user':
+          return JSON.stringify({
+            id: 'user-123',
+            name: 'Julia DC',
+            email: 'juliadc@hotmail.com',
+          });
+        default:
+          return null;
+      }
+    });
+
+    const removeItemSpy = jest.spyOn(Storage.prototype, 'removeItem');
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    act(() => {
+      result.current.signOut();
+    });
+
+    expect(result.current.user).toBeUndefined();
+    expect(removeItemSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('Should be able to update user data', async () => {
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    const user = {
+      id: 'user-123',
+      name: 'Julia DC',
+      email: 'juliadc@hotmail.com',
+      avatar_url: 'www.imagem.com',
+    };
+
+    act(() => {
+      result.current.updatedUser(user);
+    });
+
+    expect(setItemSpy).toHaveBeenCalledWith(
+      '@GoBarber:user',
+      JSON.stringify(user),
+    );
+
+    expect(result.current.user).toEqual(user);
   });
 });
